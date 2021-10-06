@@ -39,7 +39,7 @@ def get_authors_and_emails_from_pr():
     return sorted(authors_and_emails_unique)
 
 
-def rebase_pr_branch_onto_pr():
+def rebase_onto_pr():
     """
 
     Rebase current branch onto the PR.
@@ -87,7 +87,7 @@ def rebase_pr_branch_onto_pr():
         )
 
 
-def rebase_pr_branch_onto_master():
+def rebase_onto_master():
     """
 
     Rebase current branch onto the master i.e. make sure current branch is up
@@ -191,10 +191,10 @@ def main():
 
     pr_branch_exists = checkout_branch(pr_branch)
 
-    rebase_pr_branch_onto_master()
+    rebase_onto_master()
     force_push(pr_branch)
 
-    rebase_pr_branch_onto_pr()
+    rebase_onto_pr()
     force_push(pr_branch)
 
     subprocess.call(

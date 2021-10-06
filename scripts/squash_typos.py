@@ -216,6 +216,22 @@ def main():
 
     subprocess.call(["gh", "pr", "close", os.environ["PR_NUMBER"]])
 
+    squash_url = subprocess.check_output(
+        ["gh", "pr", "view", "--json", "url", "--jq", ".url"], text=True
+    ).strip()
+    subprocess.call(
+        [
+            "gh",
+            "pr",
+            "comment",
+            os.environ["PR_NUMBER"],
+            "--body",
+            f"Thank you for your contribution! We collect all typo fixes \
+                into a single pull request and merge it once it gets big enough: \
+                {squash_url}",
+        ]
+    )
+
 
 if __name__ == "__main__":
     main()

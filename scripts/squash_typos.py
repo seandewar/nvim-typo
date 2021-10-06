@@ -39,7 +39,7 @@ def get_authors_and_emails_from_pr():
     return sorted(authors_and_emails_unique)
 
 
-def rebase_squash_branch_onto_pr():
+def rebase_pr_branch_onto_pr():
     """
 
     Rebase current branch onto the PR.
@@ -87,7 +87,7 @@ def rebase_squash_branch_onto_pr():
         )
 
 
-def rebase_squash_branch_onto_master():
+def rebase_pr_branch_onto_master():
     """
 
     Rebase current branch onto the master i.e. make sure current branch is up
@@ -164,7 +164,7 @@ def checkout_branch(branch):
     return False
 
 
-def get_all_pr_urls(squash_branch_exists):
+def get_all_pr_urls(pr_branch_exists):
     """
 
     Return a list of URLs for the pull requests with the typo fixes. If a
@@ -173,7 +173,7 @@ def get_all_pr_urls(squash_branch_exists):
     """
 
     all_pr_urls = ""
-    if squash_branch_exists:
+    if pr_branch_exists:
         all_pr_urls += subprocess.check_output(
             ["gh", "pr", "view", "--json", "body", "--jq", ".body"], text=True
         )
@@ -187,15 +187,15 @@ def get_all_pr_urls(squash_branch_exists):
 
 
 def main():
-    squash_branch = "marvim/squash-typos"
+    pr_branch = "marvim/squash-typos"
 
-    squash_branch_exists = checkout_branch(squash_branch)
+    pr_branch_exists = checkout_branch(pr_branch)
 
-    rebase_squash_branch_onto_master()
-    force_push(squash_branch)
+    rebase_pr_branch_onto_master()
+    force_push(pr_branch)
 
-    rebase_squash_branch_onto_pr()
-    force_push(squash_branch)
+    rebase_pr_branch_onto_pr()
+    force_push(pr_branch)
 
     subprocess.call(
         [
@@ -204,16 +204,16 @@ def main():
             "create",
             "--fill",
             "--head",
-            squash_branch,
+            pr_branch,
             "--title",
             "chore: typo fixes (automated)",
         ]
     )
 
     squash_all_commits()
-    force_push(squash_branch)
+    force_push(pr_branch)
 
-    all_pr_urls = get_all_pr_urls(squash_branch_exists)
+    all_pr_urls = get_all_pr_urls(pr_branch_exists)
     subprocess.call(["gh", "pr", "edit", "--add-label", "typo", "--body", all_pr_urls])
 
     subprocess.call(["gh", "pr", "close", os.environ["PR_NUMBER"]])

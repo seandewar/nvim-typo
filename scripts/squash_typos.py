@@ -22,17 +22,35 @@ def get_authors_and_emails_from_pr():
 
     # Get a list of all authors involved in the pull request (including co-authors).
     authors = subprocess.check_output(
-        ["gh", "pr", "view", "--json", "commits", "--jq", ".[][].authors.[].name"],
+        [
+            "gh",
+            "pr",
+            "view",
+            os.environ["PR_NUMBER"],
+            "--json",
+            "commits",
+            "--jq",
+            ".[][].authors.[].name",
+        ],
         text=True,
     ).splitlines()
 
     # Get a list of emails of the aforementioned authors.
     emails = subprocess.check_output(
-        ["gh", "pr", "view", "--json", "commits", "--jq", ".[][].authors.[].email"],
+        [
+            "gh",
+            "pr",
+            "view",
+            os.environ["PR_NUMBER"],
+            "--json",
+            "commits",
+            "--jq",
+            ".[][].authors.[].email",
+        ],
         text=True,
     ).splitlines()
 
-    authors_and_emails = [ (author, mail) for author, mail in zip(authors, emails) ]
+    authors_and_emails = [(author, mail) for author, mail in zip(authors, emails)]
 
     return authors_and_emails
 
@@ -95,7 +113,7 @@ def rebase_onto_master():
     subprocess.check_call(["git", "rebase", default_branch])
 
 
-def squash_all_commits():
+def squash_all_commits(message_body_before):
     """
 
     Squash all commits on the PR into a single commit. Credit all authors by
@@ -107,8 +125,10 @@ def squash_all_commits():
     subprocess.call(["git", "reset", "--soft", default_branch])
 
     authors_and_emails = get_authors_and_emails_from_pr()
-    commit_message_coauthors = "\n" + "\n".join(
-        [f"Co-authored-by: {i[0]} <{i[1]}>" for i in authors_and_emails]
+    commit_message_coauthors = (
+        "\n"
+        + "\n".join([f"Co-authored-by: {i[0]} <{i[1]}>" for i in authors_and_emails])
+        + message_body_before
     )
     subprocess.call(
         ["git", "commit", "-m", "chore: typo fixes", "-m", commit_message_coauthors]
@@ -190,6 +210,20 @@ def main():
     rebase_onto_master()
     force_push(pr_branch)
 
+    message_body_before = subprocess.call(
+        [
+            "gh",
+            "pr",
+            "view",
+            os.environ["PR_NUMBER"],
+            "--json",
+            "commits",
+            "--jq",
+            ".[][].messageBody",
+        ],
+        text=True,
+    )
+
     rebase_onto_pr()
     force_push(pr_branch)
 
@@ -203,10 +237,11 @@ def main():
             pr_branch,
             "--title",
             "chore: typo fixes (automated)",
-        ]
+        ],
+        text=True,
     )
 
-    squash_all_commits()
+    squash_all_commits(message_body_before)
     force_push(pr_branch)
 
     all_pr_urls = get_all_pr_urls(pr_branch_exists)

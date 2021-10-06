@@ -128,6 +128,7 @@ def squash_all_commits(message_body_before):
     commit_message_coauthors = (
         "\n"
         + "\n".join([f"Co-authored-by: {i[0]} <{i[1]}>" for i in authors_and_emails])
+        + "\n"
         + message_body_before
     )
     subprocess.call(
@@ -210,19 +211,13 @@ def main():
     rebase_onto_master()
     force_push(pr_branch)
 
-    message_body_before = subprocess.call(
-        [
-            "gh",
-            "pr",
-            "view",
-            os.environ["PR_NUMBER"],
-            "--json",
-            "commits",
-            "--jq",
-            ".[][].messageBody",
-        ],
-        text=True,
+    message_body_before = "\n".join(
+        subprocess.check_output(
+            ["git", "log", "--format=%B", "-n1", pr_branch], text=True
+        ).splitlines()[2:]
     )
+
+    # message_body_before = subprocess.check_output( [ "gh", "pr", "view", os.environ["PR_NUMBER"], "--json", "commits", "--jq", ".[][].messageBody", ], text=True,)
 
     rebase_onto_pr()
     force_push(pr_branch)

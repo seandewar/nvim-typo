@@ -49,9 +49,7 @@ def rebase_onto_pr():
     # Check out the pull request.
     subprocess.call(["gh", "pr", "checkout", os.environ["PR_NUMBER"]])
 
-    # Rebase onto master
-    default_branch = f"{os.environ['GITHUB_BASE_REF']}"
-    subprocess.check_call(["git", "rebase", default_branch])
+    rebase_onto_master()
 
     # Change back to the original branch.
     subprocess.call(["git", "switch", "-"])

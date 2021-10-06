@@ -32,11 +32,9 @@ def get_authors_and_emails_from_pr():
         text=True,
     ).splitlines()
 
-    authors_and_emails_unique = {
-        (author, mail) for author, mail in zip(authors, emails)
-    }
+    authors_and_emails = [ (author, mail) for author, mail in zip(authors, emails) ]
 
-    return sorted(authors_and_emails_unique)
+    return authors_and_emails
 
 
 def rebase_onto_pr():

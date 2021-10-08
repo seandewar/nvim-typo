@@ -191,8 +191,10 @@ def get_all_pr_urls(pr_branch_exists):
 
     all_pr_urls = ""
     if pr_branch_exists:
-        all_pr_urls += subprocess.check_output(
-            ["gh", "pr", "view", "--json", "body", "--jq", ".body"], text=True
+        all_pr_urls += "\n".join(
+            subprocess.check_output(
+                ["gh", "pr", "view", "--json", "body", "--jq", ".body"], text=True
+            ).splitlines[2:]
         )
 
     all_pr_urls += subprocess.check_output(
@@ -217,8 +219,6 @@ def main():
         ).splitlines()[2:]
     )
 
-    # message_body_before = subprocess.check_output( [ "gh", "pr", "view", os.environ["PR_NUMBER"], "--json", "commits", "--jq", ".[][].messageBody", ], text=True,)
-
     rebase_onto_pr()
     force_push(pr_branch)
 
@@ -240,7 +240,13 @@ def main():
     force_push(pr_branch)
 
     all_pr_urls = get_all_pr_urls(pr_branch_exists)
-    subprocess.call(["gh", "pr", "edit", "--add-label", "typo", "--body", all_pr_urls])
+    pr_message_body = "This is an automated PR that collects proposed typo fixes (PRs labeled `typo`); it will be merged manually. \
+        Currently, it includes the following PRs:"
+    pr_message_body = "\n".join([pr_message_body, all_pr_urls])
+
+    subprocess.call(
+        ["gh", "pr", "edit", "--add-label", "typo", "--body", pr_message_body]
+    )
 
     subprocess.call(["gh", "pr", "close", os.environ["PR_NUMBER"]])
 
